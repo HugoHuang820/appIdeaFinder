@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const keyword = (rawKeyword || (await pickFallbackKeyword(locale))).trim();
 
     consumeFreeGeneration(customerId);
-    const task = await createIdeaTask(keyword, market, locale, customerId, 6, true);
+    const task = await createIdeaTask(keyword, market, locale, customerId, 6);
     const response = NextResponse.json(
       {
         taskId: task.taskId,
