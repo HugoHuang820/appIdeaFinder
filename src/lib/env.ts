@@ -2,11 +2,29 @@ import path from "node:path";
 
 import { DEFAULT_LOCALE } from "@/src/lib/locale";
 
+const defaultDatabasePath = process.env.VERCEL
+  ? path.join("/tmp", "idea-finder-app.db")
+  : path.join(process.cwd(), "data", "app.db");
+
+function resolveDatabasePath() {
+  const configuredPath = process.env.DATABASE_PATH;
+
+  if (!configuredPath) {
+    return defaultDatabasePath;
+  }
+
+  if (process.env.VERCEL && !path.isAbsolute(configuredPath)) {
+    return path.join("/tmp", path.basename(configuredPath));
+  }
+
+  return configuredPath;
+}
+
 export const appEnv = {
   appName: "App Idea Finder",
   defaultLocale: DEFAULT_LOCALE,
   defaultMarket: process.env.DEFAULT_MARKET ?? "Japan",
-  databasePath: process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "app.db"),
+  databasePath: resolveDatabasePath(),
   hotKeywordSource: process.env.HOT_KEYWORD_SOURCE ?? "static",
   hotKeywordsJson: process.env.HOT_KEYWORDS_JSON ?? "",
   aiProvider:

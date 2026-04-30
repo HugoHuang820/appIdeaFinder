@@ -48,7 +48,6 @@ function LocalizedPayContent({ locale }: LocalizedPayProps) {
 
   useEffect(() => {
     if (!orderId) {
-      setLoading(false);
       return;
     }
 

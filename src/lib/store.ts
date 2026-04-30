@@ -607,7 +607,7 @@ function parseTask(taskId: string): IdeaTask | null {
   };
 }
 
-async function processTask(taskId: string) {
+export async function processIdeaTask(taskId: string) {
   if (processingTasks.has(taskId)) {
     return;
   }
@@ -691,7 +691,7 @@ async function processTask(taskId: string) {
 
 function scheduleTaskProcessing(taskId: string) {
   setTimeout(() => {
-    void processTask(taskId);
+    void processIdeaTask(taskId);
   }, 0);
 }
 
@@ -701,6 +701,7 @@ export async function createIdeaTask(
   locale: Locale = "ja",
   customerId?: string,
   ideaCount = 6,
+  processImmediately = false,
 ) {
   const taskId = id("task");
   const createdAt = nowIso();
@@ -737,7 +738,11 @@ export async function createIdeaTask(
       createdAt,
     );
 
-  scheduleTaskProcessing(taskId);
+  if (processImmediately) {
+    await processIdeaTask(taskId);
+  } else {
+    scheduleTaskProcessing(taskId);
+  }
 
   const task = parseTask(taskId);
   if (!task) {
