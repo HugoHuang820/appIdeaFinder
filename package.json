@@ -1,0 +1,31 @@
+{
+  "name": "ideafinder",
+  "version": "1.0.0",
+  "description": "App Idea Finder MVP",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "next": "^16.2.4",
+    "openai": "^6.35.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "stripe": "^22.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.4",
+    "typescript": "^6.0.3"
+  }
+}
