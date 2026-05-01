@@ -225,31 +225,43 @@ function LocalizedPayContent({ locale }: LocalizedPayProps) {
       return;
     }
 
-    setPaying(true);
+    try {
+      setPaying(true);
+      setError("");
 
-    await fetch("/api/payment/webhook", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "checkout.session.completed",
-        data: {
-          object: {
-            id: `session_${orderId}`,
-            metadata: {
-              orderId,
-              taskId: order.taskId ?? "",
-              locale,
-            },
-            payment_status: "paid",
-          },
+      const response = await fetch("/api/payment/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          type: "checkout.session.completed",
+          data: {
+            object: {
+              id: `session_${orderId}`,
+              metadata: {
+                orderId,
+                taskId: order.taskId ?? "",
+                locale,
+              },
+              payment_status: "paid",
+            },
+          },
+        }),
+      });
 
-    router.push(order.taskId ? `/${locale}/results/${order.taskId}?payment=success` : `/${locale}/prices?payment=success`);
-    router.refresh();
+      const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+
+      if (!response.ok) {
+        setError(data?.error?.message ?? dict.pay.missingOrder);
+        return;
+      }
+
+      router.push(order.taskId ? `/${locale}/results/${order.taskId}?payment=success` : `/${locale}/prices?payment=success`);
+      router.refresh();
+    } finally {
+      setPaying(false);
+    }
   }
 
   if (loading) {

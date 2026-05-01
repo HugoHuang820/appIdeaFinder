@@ -2,7 +2,6 @@ import OpenAI from "openai";
 
 import { fetchLightweightAppStoreContext } from "@/src/lib/app-store-signals";
 import { appEnv, isDeepSeekEnabled, isOpenAiEnabled } from "@/src/lib/env";
-import { generateIdeaPackMock } from "@/src/lib/idea-generator";
 import { buildIdeaPrompt } from "@/src/lib/prompts";
 import type { Idea, IdeaGenerationResult, Locale } from "@/src/lib/types";
 
@@ -12,6 +11,10 @@ type GenerateIdeasInput = {
   locale: Locale;
   ideaCount: number;
 };
+
+// Keep the provider timeout below the route maxDuration so the app can return
+// a controlled error instead of being terminated by the platform first.
+const AI_REQUEST_TIMEOUT_MS = 240_000;
 
 type ModelPayload = {
   keyword?: unknown;
@@ -125,41 +128,56 @@ async function generateIdeasWithClient(
 ): Promise<IdeaGenerationResult> {
   const appStoreContext = await fetchLightweightAppStoreContext(input);
   const prompt = buildIdeaPrompt(input.keyword, input.ideaCount, input.market, input.locale, appStoreContext);
-  const response = await client.chat.completions.create({
-    model,
-    response_format: {
-      type: "json_object",
-    },
-    messages: [
-      {
-        role: "system",
-        content: prompt.systemPrompt,
-      },
-      {
-        role: "user",
-        content: prompt.userPrompt,
-      },
-    ],
-  });
+  let timeout: ReturnType<typeof setTimeout> | undefined;
 
-  const content = response.choices[0]?.message?.content as
-    | string
-    | Array<{ text?: string }>
-    | null
-    | undefined;
-  let normalizedContent = "";
+  try {
+    const response = await Promise.race([
+      client.chat.completions.create({
+        model,
+        response_format: {
+          type: "json_object",
+        },
+        messages: [
+          {
+            role: "system",
+            content: prompt.systemPrompt,
+          },
+          {
+            role: "user",
+            content: prompt.userPrompt,
+          },
+        ],
+      }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          reject(new Error(`${providerName} request timed out after ${AI_REQUEST_TIMEOUT_MS}ms.`));
+        }, AI_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
 
-  if (typeof content === "string") {
-    normalizedContent = content;
-  } else if (Array.isArray(content)) {
-    normalizedContent = content.map((item) => item.text ?? "").join("");
+    const content = response.choices[0]?.message?.content as
+      | string
+      | Array<{ text?: string }>
+      | null
+      | undefined;
+    let normalizedContent = "";
+
+    if (typeof content === "string") {
+      normalizedContent = content;
+    } else if (Array.isArray(content)) {
+      normalizedContent = content.map((item) => item.text ?? "").join("");
+    }
+
+    if (!normalizedContent) {
+      throw new Error(`${providerName} returned an empty response.`);
+    }
+
+    return normalizeIdeas(JSON.parse(normalizedContent) as ModelPayload, input.locale);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
   }
-
-  if (!normalizedContent) {
-    throw new Error(`${providerName} returned an empty response.`);
-  }
-
-  return normalizeIdeas(JSON.parse(normalizedContent) as ModelPayload, input.locale);
 }
 
 export async function generateIdeas(input: GenerateIdeasInput): Promise<IdeaGenerationResult> {
@@ -179,10 +197,6 @@ export async function generateIdeas(input: GenerateIdeasInput): Promise<IdeaGene
     return generateIdeasWithClient(openai, appEnv.openAiModel, "OpenAI", input);
   }
 
-  if (!isOpenAiEnabled() && !isDeepSeekEnabled()) {
-    return generateIdeaPackMock(input.keyword, input.market, input.locale, input.ideaCount);
-  }
-
   if (deepseek) {
     return generateIdeasWithClient(deepseek, appEnv.deepSeekModel, "DeepSeek", input);
   }
@@ -191,5 +205,9 @@ export async function generateIdeas(input: GenerateIdeasInput): Promise<IdeaGene
     return generateIdeasWithClient(openai, appEnv.openAiModel, "OpenAI", input);
   }
 
-  return generateIdeaPackMock(input.keyword, input.market, input.locale, input.ideaCount);
+  if (!isOpenAiEnabled() && !isDeepSeekEnabled()) {
+    throw new Error("No AI provider is configured.");
+  }
+
+  throw new Error("No available AI client could be initialized.");
 }

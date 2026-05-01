@@ -702,6 +702,7 @@ export async function createIdeaTask(
   customerId?: string,
   ideaCount = 6,
   processImmediately = false,
+  scheduleProcessing = true,
 ) {
   const taskId = id("task");
   const createdAt = nowIso();
@@ -740,7 +741,7 @@ export async function createIdeaTask(
 
   if (processImmediately) {
     await processIdeaTask(taskId);
-  } else {
+  } else if (scheduleProcessing) {
     scheduleTaskProcessing(taskId);
   }
 

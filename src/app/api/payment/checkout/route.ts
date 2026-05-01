@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import { createOrder, getTask } from "@/src/lib/store";
@@ -16,7 +18,8 @@ export async function POST(request: Request) {
   const locale = resolveLocale(typeof body?.locale === "string" ? body.locale : undefined);
   const purchaseType: PurchaseType = body?.purchaseType === "subscription" ? "subscription" : "one_time_pack";
   const subscriptionPlanId = typeof body?.subscriptionPlanId === "string" ? body.subscriptionPlanId : null;
-  const customerId = parseCustomerId(request) || null;
+  const existingCustomerId = parseCustomerId(request);
+  const customerId = existingCustomerId || `cust_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
 
   if (!taskId && purchaseType !== "subscription") {
     return NextResponse.json(
@@ -78,10 +81,33 @@ export async function POST(request: Request) {
     origin,
   });
 
-  return NextResponse.json(
+  if (!order) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "CHECKOUT_CREATE_FAILED",
+          message: "Failed to create checkout order.",
+        },
+      },
+      { status: 500 },
+    );
+  }
+
+  const response = NextResponse.json(
     {
       order,
     },
     { status: 201 },
   );
+
+  if (!existingCustomerId) {
+    response.cookies.set("idea_finder_customer", customerId, {
+      httpOnly: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
+  return response;
 }

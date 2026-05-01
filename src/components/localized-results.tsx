@@ -27,6 +27,7 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(12);
   const processingRequestRef = useRef<Promise<IdeaTask> | null>(null);
+  const processingStartedRef = useRef(false);
 
   const fetchTask = useCallback(async (full: boolean) => {
     const response = await fetch(`/api/ideas/${taskId}${full ? "" : "/preview"}`, {
@@ -62,9 +63,6 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
         throw new Error(data?.error?.message ?? "Failed to generate ideas.");
       }
 
-      setTask(data);
-      setError("");
-      setLoading(false);
       return data as IdeaTask;
     })().finally(() => {
       processingRequestRef.current = null;
@@ -84,6 +82,40 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
           return;
         }
 
+        if (
+          data.status === "pending" ||
+          data.status === "processing" ||
+          (paymentStatus === "success" && !data.isUnlocked)
+        ) {
+          if ((data.status === "pending" || data.status === "processing") && !processingStartedRef.current) {
+            processingStartedRef.current = true;
+            void processTask()
+              .then((processedTask) => {
+                if (!active) {
+                  return;
+                }
+
+                setTask(processedTask);
+                setError("");
+                setLoading(false);
+              })
+              .catch((processError) => {
+                if (!active) {
+                  return;
+                }
+
+                setError(processError instanceof Error ? processError.message : "Failed to generate ideas.");
+                setLoading(false);
+              })
+              .finally(() => {
+                processingStartedRef.current = false;
+              });
+          }
+
+          timer = window.setTimeout(poll, 1500);
+          return;
+        }
+
         if (data.isUnlocked) {
           const fullTask = await fetchTask(true);
           if (!active) {
@@ -92,25 +124,6 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
 
           setTask(fullTask);
           return;
-        }
-
-        if (
-          data.status === "pending" ||
-          data.status === "processing" ||
-          (paymentStatus === "success" && !data.isUnlocked)
-        ) {
-          if (data.status === "pending" || data.status === "processing") {
-            const processedTask = await processTask();
-            if (!active) {
-              return;
-            }
-
-            if (processedTask.status !== "pending" && processedTask.status !== "processing") {
-              return;
-            }
-          }
-
-          timer = window.setTimeout(poll, 1500);
         }
       } catch (fetchError) {
         if (!active) {

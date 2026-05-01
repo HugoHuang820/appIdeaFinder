@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getTaskPreview, processIdeaTask } from "@/src/lib/store";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 type RouteContext = {
   params: Promise<{

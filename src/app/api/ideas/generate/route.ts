@@ -7,7 +7,7 @@ import { resolveLocale } from "@/src/lib/locale";
 import { consumeFreeGeneration, createIdeaTask, getDailyFreeGenerationStatus } from "@/src/lib/store";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function parseCustomerId(request: Request) {
   const cookie = request.headers.get("cookie") ?? "";
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const keyword = (rawKeyword || (await pickFallbackKeyword(locale))).trim();
 
     consumeFreeGeneration(customerId);
-    const task = await createIdeaTask(keyword, market, locale, customerId, 6);
+    const task = await createIdeaTask(keyword, market, locale, customerId, 6, false, false);
     const response = NextResponse.json(
       {
         taskId: task.taskId,
