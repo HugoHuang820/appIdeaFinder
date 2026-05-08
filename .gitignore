@@ -6,3 +6,6 @@ coverage
 *.log
 .env.local
 .env
+data/*.db-shm
+data/*.db-wal
+tsconfig.tsbuildinfo

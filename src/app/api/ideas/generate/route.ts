@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const market = typeof body?.market === "string" && body.market.trim() ? body.market.trim() : "Japan";
     const locale = resolveLocale(typeof body?.locale === "string" ? body.locale : undefined);
     const customerId = parseCustomerId(request) || `cust_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
-    const keyword = (rawKeyword || (await pickFallbackKeyword(locale))).trim();
+    const keyword = (rawKeyword || (await pickFallbackKeyword(locale, market))).trim();
 
     consumeFreeGeneration(customerId);
     const task = await createIdeaTask(keyword, market, locale, customerId, 6, false, false);

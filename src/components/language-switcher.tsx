@@ -1,7 +1,7 @@
 "use client";
 
-import { ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
+import { ChangeEvent, FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { localeLabel, SUPPORTED_LOCALES } from "@/src/lib/locale";
 import type { Locale } from "@/src/lib/types";
@@ -13,11 +13,12 @@ type LanguageSwitcherProps = {
 };
 
 export function LanguageSwitcher({ locale, path, label = "Language" }: LanguageSwitcherProps) {
-  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  function handleChange(event: ChangeEvent<HTMLSelectElement>) {
-    const nextLocale = event.target.value as Locale;
-    router.push(`/${nextLocale}${path}`);
+  function handleChange(event: ChangeEvent<HTMLSelectElement> | FormEvent<HTMLSelectElement>) {
+    const nextLocale = event.currentTarget.value as Locale;
+    const query = searchParams.toString();
+    window.location.assign(`/${nextLocale}${path}${query ? `?${query}` : ""}`);
   }
 
   return (
@@ -25,7 +26,7 @@ export function LanguageSwitcher({ locale, path, label = "Language" }: LanguageS
       <label className="language-switcher__label" htmlFor="language-select">
         {label}
       </label>
-      <select id="language-select" onChange={handleChange} value={locale}>
+      <select id="language-select" onChange={handleChange} onInput={handleChange} value={locale}>
         {SUPPORTED_LOCALES.map((item) => (
           <option key={item} value={item}>
             {localeLabel(item)}

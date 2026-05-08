@@ -82,6 +82,7 @@ type Dictionary = {
     previewCompleteTitle: string;
     previewCompleteBody: string;
     viewUnlockOptions: string;
+    longWaitHint: string;
   };
   ideaCard: {
     locked: string;
@@ -167,13 +168,13 @@ type Dictionary = {
   };
 };
 
-export const EXAMPLES_BY_LOCALE: Record<Locale, string[]> = {
+export const EXAMPLES_BY_LOCALE: Partial<Record<Locale, string[]>> = {
   ja: ["家計簿", "ペットケア", "勉強計画", "食事管理", "習慣化"],
   en: ["pet care", "budget planner", "study schedule", "habit tracker", "meal prep"],
   "zh-CN": ["宠物护理", "学习计划", "习惯养成", "餐食管理", "家庭记账"],
 };
 
-const dictionaries: Record<Locale, Dictionary> = {
+const dictionaries: Partial<Record<Locale, Dictionary>> = {
   ja: {
     common: {
       appName: "App Idea Finder",
@@ -263,6 +264,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       previewCompleteTitle: "まずは無料プレビューを確認",
       previewCompleteBody: "上の結果を見て方向性が合えば、下の解放オプションから単発購入または月額プランを選べます。",
       viewUnlockOptions: "解放オプションを見る",
+      longWaitHint: "生成に時間がかかっています。AI が詳細な案を作成中です。このままお待ちください。",
     },
     ideaCard: {
       locked: "ロック中",
@@ -492,6 +494,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       previewCompleteTitle: "Review the free preview first",
       previewCompleteBody: "If the direction looks promising, use the unlock options below to buy once or switch to a monthly plan.",
       viewUnlockOptions: "See unlock options",
+      longWaitHint: "This is taking longer than usual. AI is still generating detailed ideas. Please keep this page open.",
     },
     ideaCard: {
       locked: "Locked",
@@ -719,6 +722,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       previewCompleteTitle: "先看结果，再决定是否解锁",
       previewCompleteBody: "你可以先浏览上面的免费预览，确认方向值得做后，再看下方的单次购买或包月方案。",
       viewUnlockOptions: "查看解锁方案",
+      longWaitHint: "这次生成耗时较长，AI 仍在生成更完整的结果，请保持页面打开稍候。",
     },
     ideaCard: {
       locked: "已锁定",
@@ -862,5 +866,5 @@ const dictionaries: Record<Locale, Dictionary> = {
 };
 
 export function getDictionary(locale: Locale) {
-  return dictionaries[locale];
+  return dictionaries[locale] ?? dictionaries.en!;
 }

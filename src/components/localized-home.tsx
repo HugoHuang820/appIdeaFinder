@@ -11,13 +11,30 @@ import type { DailyUsageStatus, Locale } from "@/src/lib/types";
 type LocalizedHomeProps = {
   locale: Locale;
   examples: string[];
+  initialKeyword: string;
+  initialMarket: string;
   usageStatus: DailyUsageStatus;
 };
 
-export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomeProps) {
+const MARKET_OPTIONS = [
+  { value: "Global", label: "Global / 全部" },
+  { value: "Japan", label: "Japan / 日本" },
+  { value: "United States", label: "United States / 美国" },
+  { value: "China", label: "China / 中国" },
+  { value: "South Korea", label: "South Korea / 韩国" },
+  { value: "United Kingdom", label: "United Kingdom / 英国" },
+  { value: "Germany", label: "Germany / 德国" },
+  { value: "France", label: "France / 法国" },
+  { value: "India", label: "India / 印度" },
+  { value: "Canada", label: "Canada / 加拿大" },
+  { value: "Australia", label: "Australia / 澳大利亚" },
+];
+
+export function LocalizedHome({ locale, examples, initialKeyword, initialMarket, usageStatus }: LocalizedHomeProps) {
   const dict = getDictionary(locale);
   const router = useRouter();
-  const [keyword, setKeyword] = useState("");
+  const [keyword, setKeyword] = useState(initialKeyword);
+  const [market, setMarket] = useState(initialMarket);
   const [exampleKeywords, setExampleKeywords] = useState(examples);
   const [submitting, setSubmitting] = useState(false);
   const [refreshingExamples, setRefreshingExamples] = useState(false);
@@ -37,7 +54,7 @@ export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomePr
         },
         body: JSON.stringify({
           keyword: keyword.trim(),
-          market: "Japan",
+          market,
           locale,
         }),
       });
@@ -50,7 +67,6 @@ export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomePr
       }
 
       router.push(`/${locale}/results/${data.taskId}`);
-      router.refresh();
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -64,6 +80,7 @@ export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomePr
 
       const search = new URLSearchParams({
         locale,
+        market,
         count: String(exampleKeywords.length || 5),
       });
 
@@ -104,6 +121,20 @@ export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomePr
             placeholder={dict.home.placeholder}
             value={keyword}
           />
+          <label className="market-select">
+            <span>{dict.common.market}</span>
+            <select
+              aria-label={dict.common.market}
+              onChange={(event) => setMarket(event.target.value)}
+              value={market}
+            >
+              {MARKET_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button className="primary-button" disabled={submitting} type="submit">
             {submitting ? dict.home.generating : dict.home.generate}
           </button>
@@ -117,14 +148,13 @@ export function LocalizedHome({ locale, examples, usageStatus }: LocalizedHomePr
             {refreshingExamples ? dict.home.refreshingKeywords : dict.home.refreshKeywords}
           </button>
           {exampleKeywords.map((example) => (
-            <button
+            <Link
               className="ghost-button"
+              href={`/${locale}?keyword=${encodeURIComponent(example)}&market=${encodeURIComponent(market)}`}
               key={example}
-              onClick={() => setKeyword(example)}
-              type="button"
             >
               {example}
-            </button>
+            </Link>
           ))}
         </div>
 

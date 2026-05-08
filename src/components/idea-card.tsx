@@ -12,8 +12,46 @@ type IdeaCardProps = {
   unlockHref?: string;
 };
 
+function scoreLabels(locale: Locale) {
+  if (locale === "ja") {
+    return {
+      title: "機会スコア",
+      demand: "需要",
+      competition: "競争",
+      monetization: "収益性",
+      buildEase: "作りやすさ",
+      indieFit: "個人開発向き",
+      overall: "総合",
+    };
+  }
+
+  if (locale === "zh-CN") {
+    return {
+      title: "机会评分",
+      demand: "需求",
+      competition: "竞争",
+      monetization: "变现",
+      buildEase: "易开发",
+      indieFit: "独立开发适配",
+      overall: "综合",
+    };
+  }
+
+  return {
+    title: "Opportunity Scores",
+    demand: "Demand",
+    competition: "Competition",
+    monetization: "Monetization",
+    buildEase: "Build Ease",
+    indieFit: "Indie Fit",
+    overall: "Overall",
+  };
+}
+
 export function IdeaCard({ idea, locale, unlockHref }: IdeaCardProps) {
   const dict = getDictionary(locale).ideaCard;
+  const scores = idea.opportunityScores;
+  const labels = scoreLabels(locale);
 
   return (
     <article className={`idea-card ${idea.isLocked ? "locked" : ""}`}>
@@ -30,6 +68,28 @@ export function IdeaCard({ idea, locale, unlockHref }: IdeaCardProps) {
         <section>
           <h4>{dict.signalSummary}</h4>
           <p>{idea.signalSummary.summary}</p>
+        </section>
+      ) : null}
+
+      {scores ? (
+        <section>
+          <h4>{labels.title}</h4>
+          <div className="score-grid">
+            {[
+              [labels.overall, scores.overall],
+              [labels.demand, scores.demand],
+              [labels.competition, scores.competition],
+              [labels.monetization, scores.monetization],
+              [labels.buildEase, scores.buildEase],
+              [labels.indieFit, scores.indieFit],
+            ].map(([label, score]) => (
+              <div className="score-item" key={label}>
+                <span>{label}</span>
+                <strong>{score}/10</strong>
+              </div>
+            ))}
+          </div>
+          <p className="score-rationale">{scores.rationale}</p>
         </section>
       ) : null}
 

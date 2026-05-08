@@ -470,6 +470,7 @@ function cloneIdeaForVisibility(idea: Idea, visible: boolean, showBuildPackage: 
     targetUsers: [],
     why: null,
     signalSummary: idea.signalSummary ? { ...idea.signalSummary } : null,
+    opportunityScores: idea.opportunityScores ? { ...idea.opportunityScores } : null,
     aso: {
       title: null,
       subtitle: null,
@@ -506,7 +507,7 @@ function parseIdeas(taskId: string): Idea[] {
       `
         SELECT id, name, one_line, target_users_json, why_text, signal_summary_json, aso_title, aso_subtitle,
                aso_hero_hook, aso_description, aso_keywords_json, aso_value_bullets_json, aso_paywall_copy,
-               build_package_json, position
+               opportunity_scores_json, build_package_json, position
         FROM ideas
         WHERE task_id = ?
         ORDER BY position ASC
@@ -526,6 +527,7 @@ function parseIdeas(taskId: string): Idea[] {
     aso_keywords_json: string;
     aso_value_bullets_json: string;
     aso_paywall_copy: string;
+    opportunity_scores_json: string;
     build_package_json: string;
     position: number;
   }>;
@@ -537,6 +539,7 @@ function parseIdeas(taskId: string): Idea[] {
     targetUsers: parseJson(row.target_users_json, [] as string[]),
     why: row.why_text,
     signalSummary: parseJson(row.signal_summary_json, null),
+    opportunityScores: parseJson(row.opportunity_scores_json, null),
     aso: {
       title: row.aso_title,
       subtitle: row.aso_subtitle,
@@ -636,9 +639,9 @@ export async function processIdeaTask(taskId: string) {
         INSERT INTO ideas (
           id, task_id, position, name, one_line, target_users_json, why_text, signal_summary_json,
           aso_title, aso_subtitle, aso_hero_hook, aso_description, aso_keywords_json, aso_value_bullets_json,
-          aso_paywall_copy, build_package_json
+          aso_paywall_copy, opportunity_scores_json, build_package_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
     );
 
@@ -663,6 +666,7 @@ export async function processIdeaTask(taskId: string) {
           JSON.stringify(idea.aso.keywords),
           JSON.stringify(idea.aso.valueBullets ?? []),
           idea.aso.paywallCopy ?? "",
+          JSON.stringify(idea.opportunityScores ?? null),
           JSON.stringify(idea.buildPackage),
         );
       });

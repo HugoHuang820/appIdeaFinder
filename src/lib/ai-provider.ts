@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { fetchLightweightAppStoreContext } from "@/src/lib/app-store-signals";
 import { appEnv, isDeepSeekEnabled, isOpenAiEnabled } from "@/src/lib/env";
 import { buildIdeaPrompt } from "@/src/lib/prompts";
-import type { Idea, IdeaGenerationResult, Locale } from "@/src/lib/types";
+import type { Idea, IdeaGenerationResult, Locale, OpportunityScores } from "@/src/lib/types";
 
 type GenerateIdeasInput = {
   keyword: string;
@@ -43,6 +43,43 @@ function isStringArray(value: unknown): value is string[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function normalizeScore(value: unknown, fallback = 5) {
+  const score = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(score)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(Math.round(score), 1), 10);
+}
+
+function normalizeOpportunityScores(value: unknown): OpportunityScores {
+  const record = isRecord(value) ? value : {};
+  const demand = normalizeScore(record.demand, 6);
+  const competition = normalizeScore(record.competition, 5);
+  const monetization = normalizeScore(record.monetization, 6);
+  const buildEase = normalizeScore(record.buildEase, 6);
+  const indieFit = normalizeScore(record.indieFit, 6);
+  const overall = normalizeScore(
+    record.overall,
+    Math.round((demand + monetization + buildEase + indieFit + (11 - competition)) / 5),
+  );
+  const rationale =
+    typeof record.rationale === "string" && record.rationale.trim()
+      ? record.rationale.trim()
+      : "Balanced from lightweight market signals and MVP feasibility.";
+
+  return {
+    demand,
+    competition,
+    monetization,
+    buildEase,
+    indieFit,
+    overall,
+    rationale,
+  };
 }
 
 function normalizeIdeas(payload: ModelPayload, locale: Locale): IdeaGenerationResult {
@@ -91,6 +128,7 @@ function normalizeIdeas(payload: ModelPayload, locale: Locale): IdeaGenerationRe
         source: "app_store_lightweight",
         confidence: "low",
       },
+      opportunityScores: normalizeOpportunityScores(record.opportunityScores),
       aso: {
         title: aso.title.trim(),
         subtitle: aso.subtitle.trim(),

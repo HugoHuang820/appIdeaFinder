@@ -19,8 +19,10 @@ Hard rules:
 - Do not output raw App Store scrape dumps
 - Do not include commentary before or after JSON
 - Each idea must include name, oneLine, targetUsers, why, signalSummary, aso, and buildPackage fields
+- Each idea must include opportunityScores with 1-10 scores
 - The "why" field must include a concrete monetization signal
 - signalSummary must be a plain-language takeaway, not an analytics report
+- opportunityScores must help users compare options quickly without pretending to be exact analytics
 - buildPackage must feel valuable enough for a paid user
 - Default target market is Japan unless another market is supplied`;
 
@@ -51,7 +53,8 @@ Requirements:
 - Ideas must feel monetizable
 - Avoid vague startup concepts
 - Avoid analytics framing
-- Do not include tables, scores, or metrics
+- Do not include tables or raw market metric dumps
+- Do include compact 1-10 opportunityScores for demand, competition, monetization, buildEase, indieFit, and overall
 - Include a short signalSummary for every idea
 - Include richer app messaging content for every idea, not only store metadata
 - Include a detailed buildPackage for every idea
@@ -74,6 +77,15 @@ Output:
       "targetUsers": ["string"],
       "why": "string",
       "signalSummary": "string",
+      "opportunityScores": {
+        "demand": 1,
+        "competition": 1,
+        "monetization": 1,
+        "buildEase": 1,
+        "indieFit": 1,
+        "overall": 1,
+        "rationale": "string"
+      },
       "aso": {
         "title": "string",
         "subtitle": "string",
@@ -99,7 +111,15 @@ Additional quality bar for "aso":
 - "description" should be 3-5 concrete sentences, not a short generic line
 - "valueBullets" should contain 3 clear paid-worthy selling points
 - "paywallCopy" should sound like upgrade or purchase copy a user would actually respond to
-- Avoid generic ASO jargon; write like product positioning and conversion messaging`;
+- Avoid generic ASO jargon; write like product positioning and conversion messaging
+
+Additional quality bar for "opportunityScores":
+- Use whole numbers from 1 to 10
+- Higher competition means harder competition, not better competition
+- buildEase should be higher when the MVP is easier for a solo maker
+- indieFit should be higher when the idea is realistic for a solo or AI-assisted builder
+- overall should balance demand, monetization, buildEase, indieFit, and competition risk
+- rationale should be one concrete sentence explaining the score tradeoff`;
 
   return {
     systemPrompt: IDEA_SYSTEM_PROMPT,

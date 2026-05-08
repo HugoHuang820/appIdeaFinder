@@ -158,6 +158,15 @@ export function generateIdeaPackMock(
         source: "ai_inferred",
         confidence: "low",
       },
+      opportunityScores: {
+        demand: 6 + (index % 3),
+        competition: 4 + (index % 4),
+        monetization: 6 + (index % 3),
+        buildEase: 7 - (index % 3),
+        indieFit: 7 + (index % 2),
+        overall: 7,
+        rationale: localizeText(locale, "Good solo-builder fit because the MVP can focus on one repeatable workflow before adding premium templates."),
+      },
       aso: {
         title: titleName,
         subtitle: localizeText(locale, `Simple ${baseKeyword} workflows for ${pattern.audience}`),

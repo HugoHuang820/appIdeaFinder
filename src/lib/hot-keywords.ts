@@ -1,7 +1,13 @@
 import { appEnv } from "@/src/lib/env";
 import type { Locale } from "@/src/lib/types";
 
-const STATIC_HOT_KEYWORD_POOL: Record<Locale, string[]> = {
+type AppStoreSearchResult = {
+  trackName?: string;
+  primaryGenreName?: string;
+  genres?: string[];
+};
+
+const LOCALE_KEYWORD_POOL: Partial<Record<Locale, string[]>> = {
   ja: [
     "家計簿",
     "習慣化",
@@ -9,7 +15,6 @@ const STATIC_HOT_KEYWORD_POOL: Record<Locale, string[]> = {
     "筋トレ記録",
     "勉強計画",
     "語学学習",
-    "メンタルケア",
     "食事管理",
     "副業管理",
     "旅行計画",
@@ -18,12 +23,10 @@ const STATIC_HOT_KEYWORD_POOL: Record<Locale, string[]> = {
     "写真整理",
     "家族共有",
     "ペットケア",
-    "育児記録",
     "通勤管理",
     "ストレス記録",
     "献立管理",
     "薬管理",
-    "スキンケア記録",
     "読書記録",
     "水分補給",
     "掃除管理",
@@ -112,12 +115,156 @@ const STATIC_HOT_KEYWORD_POOL: Record<Locale, string[]> = {
     "支出记录",
     "睡眠改善",
   ],
+  "zh-TW": [
+    "家庭記帳",
+    "習慣養成",
+    "睡眠紀錄",
+    "健身打卡",
+    "學習計畫",
+    "語言學習",
+    "飲食管理",
+    "副業管理",
+    "旅行計畫",
+    "任務管理",
+    "寵物照護",
+    "儲蓄目標",
+  ],
 };
 
-const DEFAULT_FALLBACK_KEYWORD: Record<Locale, string> = {
+const MARKET_KEYWORD_POOL: Record<string, string[]> = {
+  global: [
+    "AI habit coach",
+    "budget planner",
+    "walking tracker",
+    "meal prep",
+    "sleep improvement",
+    "language learning",
+    "pet care",
+    "family organizer",
+    "study planner",
+    "mental wellness",
+    "savings goal",
+    "freelance tracker",
+  ],
+  japan: [
+    "家計簿",
+    "推し活",
+    "睡眠改善",
+    "通勤管理",
+    "献立管理",
+    "貯金目標",
+    "薬管理",
+    "写真整理",
+    "学習計画",
+    "ペットケア",
+    "散歩記録",
+    "副業管理",
+  ],
+  "united states": [
+    "AI habit coach",
+    "budget planner",
+    "walking tracker",
+    "meal prep",
+    "side hustle",
+    "mental wellness",
+    "pet care",
+    "sleep tracker",
+    "family organizer",
+    "medication reminder",
+    "skincare tracker",
+    "savings goal",
+  ],
+  china: [
+    "记账",
+    "副业",
+    "学习计划",
+    "睡眠记录",
+    "健身打卡",
+    "喝水提醒",
+    "宠物护理",
+    "家庭共享",
+    "储蓄目标",
+    "情绪记录",
+    "旅行计划",
+    "任务管理",
+  ],
+  "south korea": [
+    "habit tracker",
+    "study planner",
+    "expense tracker",
+    "meal planner",
+    "sleep tracker",
+    "pet care",
+    "language learning",
+    "walking tracker",
+  ],
+  "united kingdom": [
+    "budget planner",
+    "commute planner",
+    "meal prep",
+    "walking tracker",
+    "family organizer",
+    "side hustle",
+    "mental wellness",
+    "reading log",
+  ],
+  germany: [
+    "budget planner",
+    "habit tracker",
+    "meal planner",
+    "walking tracker",
+    "family organizer",
+    "language learning",
+    "expense tracker",
+    "sleep improvement",
+  ],
+  france: [
+    "budget planner",
+    "meal planner",
+    "walking tracker",
+    "language learning",
+    "family organizer",
+    "habit tracker",
+    "sleep tracker",
+    "pet care",
+  ],
+  india: [
+    "study planner",
+    "expense tracker",
+    "habit tracker",
+    "language learning",
+    "side hustle",
+    "walking tracker",
+    "meal planner",
+    "exam prep",
+  ],
+  canada: [
+    "budget planner",
+    "walking tracker",
+    "meal prep",
+    "family organizer",
+    "habit tracker",
+    "mental wellness",
+    "pet care",
+    "sleep tracker",
+  ],
+  australia: [
+    "budget planner",
+    "walking tracker",
+    "meal prep",
+    "pet care",
+    "habit tracker",
+    "family organizer",
+    "freelance tracker",
+    "sleep improvement",
+  ],
+};
+
+const DEFAULT_FALLBACK_KEYWORD: Partial<Record<Locale, string>> = {
   ja: "習慣化",
   en: "habit tracker",
   "zh-CN": "习惯养成",
+  "zh-TW": "習慣養成",
 };
 
 function shuffle<T>(items: T[]) {
@@ -132,7 +279,38 @@ function shuffle<T>(items: T[]) {
 }
 
 function normalizeKeywordList(items: string[]) {
-  return items.map((keyword) => keyword.trim()).filter(Boolean);
+  return [...new Set(items.map((keyword) => keyword.trim()).filter(Boolean))];
+}
+
+function normalizeMarket(market?: string) {
+  return (market || "Global").trim().toLowerCase();
+}
+
+function countriesForMarket(market?: string) {
+  const normalized = normalizeMarket(market);
+
+  if (normalized.includes("global") || normalized.includes("all") || normalized.includes("全部")) {
+    return ["jp", "us", "cn"];
+  }
+
+  if (normalized.includes("japan") || normalized.includes("日本")) return ["jp"];
+  if (normalized.includes("china") || normalized.includes("中国")) return ["cn"];
+  if (normalized.includes("korea")) return ["kr"];
+  if (normalized.includes("kingdom") || normalized.includes("britain")) return ["gb"];
+  if (normalized.includes("germany")) return ["de"];
+  if (normalized.includes("france")) return ["fr"];
+  if (normalized.includes("india")) return ["in"];
+  if (normalized.includes("canada")) return ["ca"];
+  if (normalized.includes("australia")) return ["au"];
+  if (normalized.includes("united states") || normalized.includes("usa") || normalized.includes("america")) return ["us"];
+
+  return ["us"];
+}
+
+function marketKeywordPool(market?: string) {
+  const normalized = normalizeMarket(market);
+  const key = Object.keys(MARKET_KEYWORD_POOL).find((item) => normalized.includes(item));
+  return MARKET_KEYWORD_POOL[key ?? "global"];
 }
 
 function parseConfiguredKeywords() {
@@ -148,33 +326,129 @@ function parseConfiguredKeywords() {
   }
 }
 
-function getKeywordPool(locale: Locale) {
+function configuredKeywordPool(locale: Locale) {
   const configured = parseConfiguredKeywords();
-  const configuredList = configured?.[locale]
+  return configured?.[locale]
     ?.map((keyword) => (typeof keyword === "string" ? keyword.trim() : ""))
     .filter(Boolean);
+}
+
+function getKeywordPool(locale: Locale, market?: string) {
+  const configuredList = configuredKeywordPool(locale);
 
   if (appEnv.hotKeywordSource === "env" && Array.isArray(configuredList) && configuredList.length > 0) {
     return configuredList;
   }
 
-  const staticList = normalizeKeywordList(STATIC_HOT_KEYWORD_POOL[locale]);
-  return staticList.length > 0 ? staticList : [DEFAULT_FALLBACK_KEYWORD[locale]];
+  return normalizeKeywordList([...(LOCALE_KEYWORD_POOL[locale] ?? []), ...(LOCALE_KEYWORD_POOL.en ?? [])]);
 }
 
-export async function getTrendingKeywords(locale: Locale, count = 5, exclude: string[] = []) {
-  const excluded = new Set(normalizeKeywordList(exclude));
-  const pool = getKeywordPool(locale);
-  const primary = shuffle(pool.filter((keyword) => !excluded.has(keyword)));
+function extractCandidateFromTitle(title: string) {
+  return title
+    .replace(/[™®©]/g, "")
+    .replace(/[-–—:|].*$/g, "")
+    .replace(/\b(app|apps|tracker|planner|manager|journal|diary)\b$/i, "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .join(" ");
+}
+
+function cleanCandidate(value: string) {
+  const candidate = value.trim().replace(/\s+/g, " ");
+  const lower = candidate.toLowerCase();
+  const blocked = new Set(["utilities", "lifestyle", "health", "fitness", "productivity", "education", "finance"]);
+
+  if (candidate.length < 4 || candidate.length > 36 || blocked.has(lower)) {
+    return "";
+  }
+
+  return candidate;
+}
+
+async function fetchAppStoreCandidates(seedKeywords: string[], market?: string) {
+  if (!appEnv.appStoreSignalEnabled) {
+    return [];
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2500);
+
+  try {
+    const countries = countriesForMarket(market);
+    const seeds = seedKeywords.slice(0, 3);
+    const settled = await Promise.allSettled(
+      countries.flatMap((country) =>
+        seeds.map(async (seed) => {
+          const url = new URL("https://itunes.apple.com/search");
+          url.searchParams.set("term", seed);
+          url.searchParams.set("country", country);
+          url.searchParams.set("entity", "software");
+          url.searchParams.set("limit", "12");
+
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": "AppIdeaFinder/1.0",
+            },
+            signal: controller.signal,
+            next: {
+              revalidate: 3600,
+            },
+          });
+
+          if (!response.ok) {
+            return [];
+          }
+
+          const data = (await response.json()) as { results?: AppStoreSearchResult[] };
+          return Array.isArray(data.results) ? data.results : [];
+        }),
+      ),
+    );
+
+    return normalizeKeywordList(
+      settled
+        .flatMap((item) => (item.status === "fulfilled" ? item.value : []))
+        .flatMap((result) => [
+          result.trackName ? extractCandidateFromTitle(result.trackName) : "",
+          result.primaryGenreName ?? "",
+          ...(result.genres ?? []),
+        ])
+        .map(cleanCandidate)
+        .filter(Boolean),
+    );
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function getTrendingKeywords(locale: Locale, count = 5, exclude: string[] = [], market = "Global") {
+  const excluded = new Set(normalizeKeywordList(exclude).map((keyword) => keyword.toLowerCase()));
+  const configuredList = configuredKeywordPool(locale);
+  const marketPool = shuffle(marketKeywordPool(market));
+  const localePool = shuffle(getKeywordPool(locale, market));
+  const curatedPool =
+    appEnv.hotKeywordSource === "env" && Array.isArray(configuredList) && configuredList.length > 0
+      ? shuffle(configuredList)
+      : normalizeKeywordList([...marketPool, ...localePool]);
+  const dynamicPool = shuffle(await fetchAppStoreCandidates(curatedPool, market));
+  const combinedPool = normalizeKeywordList([...curatedPool, ...dynamicPool]);
+  const primary = combinedPool.filter((keyword) => !excluded.has(keyword.toLowerCase()));
 
   if (primary.length >= count) {
     return primary.slice(0, count);
   }
 
-  const fallback = shuffle(pool.filter((keyword) => !primary.includes(keyword)));
-  return [...primary, ...fallback].slice(0, count);
+  return [...primary, ...combinedPool.filter((keyword) => !primary.includes(keyword))].slice(0, count);
 }
 
-export async function pickFallbackKeyword(locale: Locale) {
-  return (await getTrendingKeywords(locale, 1))[0] ?? DEFAULT_FALLBACK_KEYWORD[locale];
+export async function pickFallbackKeyword(locale: Locale, market = "Global") {
+  return (
+    (await getTrendingKeywords(locale, 1, [], market))[0] ??
+    DEFAULT_FALLBACK_KEYWORD[locale] ??
+    DEFAULT_FALLBACK_KEYWORD.en ??
+    "habit tracker"
+  );
 }

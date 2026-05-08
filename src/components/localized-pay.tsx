@@ -258,7 +258,6 @@ function LocalizedPayContent({ locale }: LocalizedPayProps) {
       }
 
       router.push(order.taskId ? `/${locale}/results/${order.taskId}?payment=success` : `/${locale}/prices?payment=success`);
-      router.refresh();
     } finally {
       setPaying(false);
     }

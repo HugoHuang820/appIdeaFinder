@@ -119,6 +119,7 @@ function createDatabase() {
       aso_hero_hook TEXT NOT NULL DEFAULT '',
       aso_value_bullets_json TEXT NOT NULL DEFAULT '[]',
       aso_paywall_copy TEXT NOT NULL DEFAULT '',
+      opportunity_scores_json TEXT NOT NULL DEFAULT '{}',
       build_package_json TEXT NOT NULL DEFAULT '{}',
       FOREIGN KEY(task_id) REFERENCES idea_tasks(task_id) ON DELETE CASCADE
     );
@@ -177,6 +178,7 @@ function createDatabase() {
   ensureColumn(db, "ideas", "aso_hero_hook", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "ideas", "aso_value_bullets_json", "TEXT NOT NULL DEFAULT '[]'");
   ensureColumn(db, "ideas", "aso_paywall_copy", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "ideas", "opportunity_scores_json", "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn(db, "payment_orders", "purchase_type", "TEXT NOT NULL DEFAULT 'one_time_pack'");
   ensureColumn(db, "payment_orders", "subscription_plan_id", "TEXT");
   ensureColumn(db, "payment_orders", "subscription_duration_months", "INTEGER");

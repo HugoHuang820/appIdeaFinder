@@ -2,7 +2,27 @@ import type { SubscriptionPlanId } from "@/src/lib/subscription-plans";
 
 export type TaskStatus = "pending" | "processing" | "completed" | "failed";
 export type PaymentStatus = "created" | "pending" | "paid" | "failed" | "expired";
-export type Locale = "ja" | "zh-CN" | "en";
+export type Locale =
+  | "ja"
+  | "en"
+  | "zh-CN"
+  | "zh-TW"
+  | "ko"
+  | "es"
+  | "pt-BR"
+  | "fr"
+  | "de"
+  | "it"
+  | "nl"
+  | "sv"
+  | "pl"
+  | "tr"
+  | "id"
+  | "vi"
+  | "th"
+  | "hi"
+  | "ar"
+  | "ru";
 export type PurchaseType = "one_time_pack" | "subscription";
 export type EntitlementType = "none" | "one_time_pack" | "subscription";
 
@@ -10,6 +30,16 @@ export type SignalSummary = {
   summary: string;
   source: "app_store_lightweight" | "ai_inferred";
   confidence: "low" | "medium";
+};
+
+export type OpportunityScores = {
+  demand: number;
+  competition: number;
+  monetization: number;
+  buildEase: number;
+  indieFit: number;
+  overall: number;
+  rationale: string;
 };
 
 export type BuildPackage = {
@@ -27,6 +57,7 @@ export type Idea = {
   targetUsers: string[];
   why: string | null;
   signalSummary: SignalSummary | null;
+  opportunityScores: OpportunityScores | null;
   aso: {
     title: string | null;
     subtitle: string | null;

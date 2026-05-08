@@ -26,6 +26,7 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
   const [checkoutLoading, setCheckoutLoading] = useState<PurchaseType | null>(null);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(12);
+  const [showLongWaitHint, setShowLongWaitHint] = useState(false);
   const processingRequestRef = useRef<Promise<IdeaTask> | null>(null);
   const processingStartedRef = useRef(false);
 
@@ -150,6 +151,7 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
     !task ||
     ((task.status === "pending" || task.status === "processing") && task.ideas.length === 0);
   const displayProgress = isGenerating ? Math.max(progress, task?.status === "processing" ? 48 : 12) : 100;
+  const shouldShowLongWaitHint = isGenerating && showLongWaitHint;
 
   useEffect(() => {
     if (!isGenerating) {
@@ -168,6 +170,20 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
       window.clearInterval(timer);
     };
   }, [isGenerating, task?.status]);
+
+  useEffect(() => {
+    if (!isGenerating) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowLongWaitHint(true);
+    }, 25000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [isGenerating, taskId]);
 
   const exportText = useMemo(() => {
     if (!task?.isUnlocked) {
@@ -243,6 +259,7 @@ export function LocalizedResults({ locale, taskId, paymentStatus }: LocalizedRes
           </div>
           <h1>{dict.results.generatingTitle}</h1>
           <p className="muted">{dict.results.generatingBody}</p>
+          {shouldShowLongWaitHint ? <p className="muted">{dict.results.longWaitHint}</p> : null}
           <div aria-hidden="true" className="loading-progress">
             <span style={{ width: `${displayProgress}%` }} />
           </div>
